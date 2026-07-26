@@ -1,0 +1,103 @@
+plugins {
+    id 'application'
+}
+
+group = 'dev.proadress'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+sourceSets {
+    main {
+        java.srcDirs = ['src/main', 'PluginInterface/src']
+        resources {
+            srcDir '.'
+            include 'picture/**'
+        }
+    }
+
+    test {
+        java.srcDirs = ['src/test']
+    }
+
+    petPlugin {
+        java.srcDirs = ['PluginPetMove/src/main']
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+
+    trayPlugin {
+        java.srcDirs = ['PluginTrayAid/src/main']
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+configurations {
+    petPluginImplementation.extendsFrom implementation
+    trayPluginImplementation.extendsFrom implementation
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.13.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+application {
+    mainClass = 'main.mainProcess.Main'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xlint:all', '-Werror']
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+    systemProperty 'java.awt.headless', 'true'
+}
+
+def petPluginJar = tasks.register('petPluginJar', Jar) {
+    archiveBaseName = 'robot-fox-plugin'
+    destinationDirectory = layout.buildDirectory.dir('plugins/pet')
+    from sourceSets.petPlugin.output
+    from('PluginPetMove/src/META-INF') {
+        into 'META-INF'
+    }
+}
+
+def trayPluginJar = tasks.register('trayPluginJar', Jar) {
+    archiveBaseName = 'plugin-installer'
+    destinationDirectory = layout.buildDirectory.dir('plugins/tray')
+    from sourceSets.trayPlugin.output
+    from('PluginTrayAid/src/META-INF') {
+        into 'META-INF'
+    }
+}
+
+tasks.named('build') {
+    dependsOn petPluginJar, trayPluginJar
+}
+
+tasks.named('test') {
+    dependsOn petPluginJar, trayPluginJar
+    systemProperty 'desktopPet.testPluginDir', layout.buildDirectory.dir('plugins').get().asFile
+}
+
+tasks.named('run') {
+    dependsOn petPluginJar, trayPluginJar
+}
+
+tasks.register('generateArtwork', Exec) {
+    group = 'build setup'
+    description = 'Regenerates runtime artwork from the committed mascot source.'
+    commandLine 'java', 'tools/GenerateArtwork.java', projectDir
+}
