@@ -26,7 +26,7 @@ public final class Main {
     private static void start() {
         loadSettings();
 
-        Path pluginRoot = Path.of(System.getProperty("desktopPet.pluginDir", "build/plugins"));
+        Path pluginRoot = PluginDirectories.resolve();
         List<PetPlugin> petPlugins = new PluginManager(pluginRoot.resolve("pet")).getPetPlugins();
         List<TrayPlugin> trayPlugins = new PluginManager(pluginRoot.resolve("tray")).getTrayPlugins();
 

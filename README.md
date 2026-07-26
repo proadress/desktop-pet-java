@@ -37,6 +37,13 @@ build/plugins/pet/
 build/plugins/tray/
 ```
 
+The ZIP and TAR distributions include both plugin JARs. After extracting one,
+launch the platform script under `bin/`; the application automatically resolves
+the adjacent `plugins/` directory.
+
+For a custom plugin location, set the Java system property
+`desktopPet.pluginDir` to the desired directory.
+
 ## Architecture
 
 ```text

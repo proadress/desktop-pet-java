@@ -83,6 +83,19 @@ def trayPluginJar = tasks.register('trayPluginJar', Jar) {
     }
 }
 
+distributions {
+    main {
+        contents {
+            from(petPluginJar) {
+                into 'plugins/pet'
+            }
+            from(trayPluginJar) {
+                into 'plugins/tray'
+            }
+        }
+    }
+}
+
 tasks.named('build') {
     dependsOn petPluginJar, trayPluginJar
 }
@@ -94,6 +107,23 @@ tasks.named('test') {
 
 tasks.named('run') {
     dependsOn petPluginJar, trayPluginJar
+}
+
+tasks.register('verifyDistribution') {
+    group = 'verification'
+    description = 'Checks that the portable distribution contains both example plugins.'
+    dependsOn tasks.named('distZip')
+
+    doLast {
+        def archive = tasks.named('distZip').get().archiveFile.get().asFile
+        def files = zipTree(archive)
+        assert files.matching { include '**/plugins/pet/*.jar' }.files.size() == 1
+        assert files.matching { include '**/plugins/tray/*.jar' }.files.size() == 1
+    }
+}
+
+tasks.named('check') {
+    dependsOn tasks.named('verifyDistribution')
 }
 
 tasks.register('generateArtwork', Exec) {
